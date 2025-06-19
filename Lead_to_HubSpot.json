@@ -1,0 +1,353 @@
+{
+  "name": "Lead to HubSpot",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "Placeholder for Lead to HubSpot",
+        "height": 530,
+        "width": 1100,
+        "color": 5
+      },
+      "id": "056c084c-5b6a-48a6-ba89-9fb86bfb9ece",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -480,
+        -240
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead-to-hubspot"
+      },
+      "id": "d53202f1-2095-44db-b12d-450cde7d1dd3",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -300,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "chunkSize": 400,
+        "chunkOverlap": 40
+      },
+      "id": "1714cebd-2e6e-461c-97ee-adb767be43ea",
+      "name": "Text Splitter",
+      "type": "@n8n/n8n-nodes-langchain.textSplitterCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        -130,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "model": "embed-english-v3.0",
+        "options": {}
+      },
+      "id": "831ece73-5cea-4505-abc2-138247802af1",
+      "name": "Embeddings",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsCohere",
+      "typeVersion": 1,
+      "position": [
+        70,
+        0
+      ],
+      "credentials": {
+        "cohereApi": {
+          "id": "COHERE_API",
+          "name": "Cohere"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "options": {},
+        "indexName": "lead_to_hubspot"
+      },
+      "id": "dfc452c0-7fbd-4fdb-8f5c-84efc4681695",
+      "name": "Supabase Insert",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1,
+      "position": [
+        270,
+        0
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "SUPABASE_API",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "indexName": "lead_to_hubspot"
+      },
+      "id": "ce705b14-0b85-4bdb-bcb4-ada69abcd91e",
+      "name": "Supabase Query",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1,
+      "position": [
+        270,
+        -180
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "SUPABASE_API",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "Supabase",
+        "description": "Vector context"
+      },
+      "id": "2d2a1930-7e4d-4a08-9917-82c2fe049aee",
+      "name": "Vector Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolVectorStore",
+      "typeVersion": 1,
+      "position": [
+        450,
+        -180
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "20c8dd61-5a12-4ccc-8706-b29e67284644",
+      "name": "Window Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        450,
+        -40
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "0c222da2-dec8-4ca5-bb96-164cce3678ca",
+      "name": "Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1,
+      "position": [
+        450,
+        -340
+      ],
+      "credentials": {
+        "anthropicApi": {
+          "id": "ANTHROPIC_API",
+          "name": "Anthropic"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "Handle data",
+        "options": {
+          "systemMessage": "You are an assistant for Lead to HubSpot"
+        }
+      },
+      "id": "e627df3a-42af-4589-8597-bc365d08d2db",
+      "name": "RAG Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1,
+      "position": [
+        720,
+        -40
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "SHEET_ID",
+          "mode": "list",
+          "cachedResultName": "Lead to HubSpot"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Log",
+          "mode": "list",
+          "cachedResultName": "Log"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": "Status",
+          "schema": []
+        }
+      },
+      "id": "17f41ec2-068e-480e-b897-33528e49ac3f",
+      "name": "Append Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        930,
+        -40
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "SHEETS_API",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "channel": "#alerts",
+        "text": "Lead to HubSpot error: {$json.error.message}"
+      },
+      "id": "256bec9e-fb7f-48cb-8811-2a1645af34ef",
+      "name": "Slack Alert",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 1,
+      "position": [
+        930,
+        120
+      ],
+      "credentials": {
+        "slackApi": {
+          "id": "SLACK_API",
+          "name": "Slack"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Text Splitter",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Window Memory",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text Splitter": {
+      "main": [
+        [
+          {
+            "node": "Embeddings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ],
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Supabase Insert",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Insert",
+            "type": "ai_embedding",
+            "index": 0
+          },
+          {
+            "node": "Supabase Query",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Insert": {
+      "ai_document": [
+        []
+      ]
+    },
+    "Supabase Query": {
+      "ai_vectorStore": [
+        [
+          {
+            "node": "Vector Tool",
+            "type": "ai_vectorStore",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Vector Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "RAG Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Window Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "RAG Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "RAG Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RAG Agent": {
+      "main": [
+        [
+          {
+            "node": "Append Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ],
+      "onError": [
+        [
+          {
+            "node": "Slack Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "triggerCount": 1
+}

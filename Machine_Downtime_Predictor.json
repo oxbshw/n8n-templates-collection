@@ -1,0 +1,299 @@
+{
+  "name": "Machine Downtime Predictor",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Machine Downtime Predictor",
+        "height": 520,
+        "width": 1100
+      },
+      "id": "7f896bbc-9cf1-42d1-ba8f-61405b20a4a4",
+      "name": "Sticky",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -500,
+        -250
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "machine_downtime_predictor"
+      },
+      "id": "ffc4bbb9-85fe-4960-8fa3-53a88cafde52",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -300,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "chunkSize": 400,
+        "chunkOverlap": 40
+      },
+      "id": "ad450e26-791c-4d9a-89c5-ad5661c3a9b5",
+      "name": "Splitter",
+      "type": "@n8n/n8n-nodes-langchain.textSplitterCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        -100,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "model": "default"
+      },
+      "id": "c4062ad2-7672-47c9-948a-25f89de261c1",
+      "name": "Embeddings",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1,
+      "position": [
+        100,
+        0
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "OPENAI_API",
+          "name": "OpenAI"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "indexName": "machine_downtime_predictor"
+      },
+      "id": "dec7b9a5-bd2b-43e7-8a18-1f2ec7d1d3e0",
+      "name": "Insert",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreWeaviate",
+      "typeVersion": 1,
+      "position": [
+        300,
+        0
+      ],
+      "credentials": {
+        "weaviateApi": {
+          "id": "WEAVIATE_API",
+          "name": "Weaviate account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "indexName": "machine_downtime_predictor"
+      },
+      "id": "fdeb45dc-c7f0-44f2-bfb5-52718a9abf83",
+      "name": "Query",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreWeaviate",
+      "typeVersion": 1,
+      "position": [
+        300,
+        -180
+      ],
+      "credentials": {
+        "weaviateApi": {
+          "id": "WEAVIATE_API",
+          "name": "Weaviate account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "Weaviate"
+      },
+      "id": "1ff47a2a-8135-4328-9142-d2693f9a5a87",
+      "name": "Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolVectorStore",
+      "typeVersion": 1,
+      "position": [
+        480,
+        -180
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "43b53e28-45ff-488c-9b44-dd8abdb2e76f",
+      "name": "Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        480,
+        -40
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "24047441-486e-4d22-b380-70e80a8f6e0b",
+      "name": "Chat",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1,
+      "position": [
+        480,
+        -340
+      ],
+      "credentials": {
+        "anthropicApi": {
+          "id": "ANTHROPIC_API",
+          "name": "Anthropic"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json }}"
+      },
+      "id": "67fd1430-77da-4792-88ef-91f28201c0f0",
+      "name": "Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1,
+      "position": [
+        760,
+        -40
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": "SHEET_ID",
+        "sheetName": "Log"
+      },
+      "id": "924da3ec-fbe7-49a9-8494-154c2cd0dd67",
+      "name": "Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        960,
+        -40
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "SHEETS_API",
+          "name": "Sheets"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Splitter",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Memory",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Splitter": {
+      "main": [
+        [
+          {
+            "node": "Embeddings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ],
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Insert",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Insert",
+            "type": "ai_embedding",
+            "index": 0
+          },
+          {
+            "node": "Query",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert": {
+      "ai_document": [
+        []
+      ]
+    },
+    "Query": {
+      "ai_vectorStore": [
+        [
+          {
+            "node": "Tool",
+            "type": "ai_vectorStore",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chat": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent": {
+      "main": [
+        [
+          {
+            "node": "Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

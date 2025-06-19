@@ -1,0 +1,299 @@
+{
+  "name": "Industrial IoT KPI Email",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Industrial IoT KPI Email",
+        "height": 520,
+        "width": 1100
+      },
+      "id": "943b1bcf-e3db-4693-b7d6-fcd06a9b1ddc",
+      "name": "Sticky",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -500,
+        -250
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "industrial_iot_kpi_email"
+      },
+      "id": "ed65e9c1-189a-451a-a353-86ae9e6fa985",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -300,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "chunkSize": 400,
+        "chunkOverlap": 40
+      },
+      "id": "3bb8b68e-b814-43fc-9236-f2e0615f43a1",
+      "name": "Splitter",
+      "type": "@n8n/n8n-nodes-langchain.textSplitterCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        -100,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "model": "default"
+      },
+      "id": "65454d4a-94d6-4cd5-8b7d-52424158e0e4",
+      "name": "Embeddings",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsCohere",
+      "typeVersion": 1,
+      "position": [
+        100,
+        0
+      ],
+      "credentials": {
+        "cohereApi": {
+          "id": "COHERE_API",
+          "name": "Cohere"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "indexName": "industrial_iot_kpi_email"
+      },
+      "id": "8a1213d2-7cce-42c4-9106-3e4838896c7b",
+      "name": "Insert",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreRedis",
+      "typeVersion": 1,
+      "position": [
+        300,
+        0
+      ],
+      "credentials": {
+        "redisApi": {
+          "id": "REDIS_API",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "indexName": "industrial_iot_kpi_email"
+      },
+      "id": "67f16894-cde9-4e15-96b2-4305dacb5184",
+      "name": "Query",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreRedis",
+      "typeVersion": 1,
+      "position": [
+        300,
+        -180
+      ],
+      "credentials": {
+        "redisApi": {
+          "id": "REDIS_API",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "Redis"
+      },
+      "id": "96f6af1b-3417-44ee-a761-9b8ea00bed43",
+      "name": "Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolVectorStore",
+      "typeVersion": 1,
+      "position": [
+        480,
+        -180
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "67cb649b-99d6-45f6-9278-7874202dbb04",
+      "name": "Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        480,
+        -40
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "2d8679dc-3e72-4b30-a3e4-33a991dad6fa",
+      "name": "Chat",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        480,
+        -340
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "OPENAI_API",
+          "name": "OpenAI"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json }}"
+      },
+      "id": "d1330858-7779-4352-b088-a8571b2556a4",
+      "name": "Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1,
+      "position": [
+        760,
+        -40
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": "SHEET_ID",
+        "sheetName": "Log"
+      },
+      "id": "dd69a3fa-4c57-4425-b609-1598a7583db9",
+      "name": "Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        960,
+        -40
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "SHEETS_API",
+          "name": "Sheets"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Splitter",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Memory",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Splitter": {
+      "main": [
+        [
+          {
+            "node": "Embeddings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ],
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Insert",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Insert",
+            "type": "ai_embedding",
+            "index": 0
+          },
+          {
+            "node": "Query",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert": {
+      "ai_document": [
+        []
+      ]
+    },
+    "Query": {
+      "ai_vectorStore": [
+        [
+          {
+            "node": "Tool",
+            "type": "ai_vectorStore",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chat": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent": {
+      "main": [
+        [
+          {
+            "node": "Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

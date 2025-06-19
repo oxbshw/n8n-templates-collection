@@ -1,0 +1,299 @@
+{
+  "name": "Irrigation Schedule Optimizer",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Irrigation Schedule Optimizer",
+        "height": 520,
+        "width": 1100
+      },
+      "id": "f61a51a0-1b5e-4f7d-ae28-7a1d87585c3b",
+      "name": "Sticky",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -500,
+        -250
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "irrigation_schedule_optimizer"
+      },
+      "id": "330670e3-af28-42a0-9fbd-cb93e2b7dd56",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -300,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "chunkSize": 400,
+        "chunkOverlap": 40
+      },
+      "id": "311d8f6e-c5f9-424b-b475-51b26395127e",
+      "name": "Splitter",
+      "type": "@n8n/n8n-nodes-langchain.textSplitterCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        -100,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "model": "default"
+      },
+      "id": "6bcaa39d-c038-4d22-b2f6-b064ec027d5e",
+      "name": "Embeddings",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1,
+      "position": [
+        100,
+        0
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "OPENAI_API",
+          "name": "OpenAI"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "indexName": "irrigation_schedule_optimizer"
+      },
+      "id": "023182c5-967c-44e4-99c6-84e3ffb287d3",
+      "name": "Insert",
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1,
+      "position": [
+        300,
+        0
+      ],
+      "credentials": {
+        "pineconeApi": {
+          "id": "PINECONE_API",
+          "name": "Pinecone account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "indexName": "irrigation_schedule_optimizer"
+      },
+      "id": "44c21134-953d-406a-9b29-25a308d10e8a",
+      "name": "Query",
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1,
+      "position": [
+        300,
+        -180
+      ],
+      "credentials": {
+        "pineconeApi": {
+          "id": "PINECONE_API",
+          "name": "Pinecone account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "Pinecone"
+      },
+      "id": "6a1aa32c-814c-4551-99eb-1a07bc8c4ae8",
+      "name": "Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolVectorStore",
+      "typeVersion": 1,
+      "position": [
+        480,
+        -180
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "920e99d5-4ace-4b92-94b9-4b7025b9f0c5",
+      "name": "Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        480,
+        -40
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "6a401fd5-247b-4414-8d9b-43e25c1e71a1",
+      "name": "Chat",
+      "type": "@n8n/n8n-nodes-langchain.lmChatHf",
+      "typeVersion": 1,
+      "position": [
+        480,
+        -340
+      ],
+      "credentials": {
+        "huggingFaceApi": {
+          "id": "HF_API",
+          "name": "HuggingFace"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json }}"
+      },
+      "id": "f6e17324-514b-4001-8123-899440a2de47",
+      "name": "Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1,
+      "position": [
+        760,
+        -40
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": "SHEET_ID",
+        "sheetName": "Log"
+      },
+      "id": "8feeeba0-2a81-4271-9277-e7567ad5d952",
+      "name": "Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        960,
+        -40
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "SHEETS_API",
+          "name": "Sheets"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Splitter",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Memory",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Splitter": {
+      "main": [
+        [
+          {
+            "node": "Embeddings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ],
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Insert",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Insert",
+            "type": "ai_embedding",
+            "index": 0
+          },
+          {
+            "node": "Query",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert": {
+      "ai_document": [
+        []
+      ]
+    },
+    "Query": {
+      "ai_vectorStore": [
+        [
+          {
+            "node": "Tool",
+            "type": "ai_vectorStore",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chat": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent": {
+      "main": [
+        [
+          {
+            "node": "Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

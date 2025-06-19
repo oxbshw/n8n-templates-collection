@@ -1,0 +1,299 @@
+{
+  "name": "Hotel Review Sentiment",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Hotel Review Sentiment",
+        "height": 520,
+        "width": 1100
+      },
+      "id": "3f6dc161-7d19-4399-8fad-b801e4406848",
+      "name": "Sticky",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -500,
+        -250
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "hotel_review_sentiment"
+      },
+      "id": "5f8dd254-d4f6-4fa2-a17a-743eae80b24d",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -300,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "chunkSize": 400,
+        "chunkOverlap": 40
+      },
+      "id": "98b19fc7-ec4f-460e-948a-5a7855399235",
+      "name": "Splitter",
+      "type": "@n8n/n8n-nodes-langchain.textSplitterCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        -100,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "model": "default"
+      },
+      "id": "2133104f-a360-4cc1-8dee-92a6da93ea3e",
+      "name": "Embeddings",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsHuggingFace",
+      "typeVersion": 1,
+      "position": [
+        100,
+        0
+      ],
+      "credentials": {
+        "huggingFaceApi": {
+          "id": "HF_API",
+          "name": "HuggingFace"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "indexName": "hotel_review_sentiment"
+      },
+      "id": "ab99b854-32da-4fed-9fdc-6285c1e5beff",
+      "name": "Insert",
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1,
+      "position": [
+        300,
+        0
+      ],
+      "credentials": {
+        "pineconeApi": {
+          "id": "PINECONE_API",
+          "name": "Pinecone account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "indexName": "hotel_review_sentiment"
+      },
+      "id": "b45e5508-bafd-46cd-9e8e-1bc562b2fba8",
+      "name": "Query",
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1,
+      "position": [
+        300,
+        -180
+      ],
+      "credentials": {
+        "pineconeApi": {
+          "id": "PINECONE_API",
+          "name": "Pinecone account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "Pinecone"
+      },
+      "id": "e31d2844-19a3-4d92-bffd-3903a368a086",
+      "name": "Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolVectorStore",
+      "typeVersion": 1,
+      "position": [
+        480,
+        -180
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "f84bc4ec-8df1-4790-a46f-21c89b10b382",
+      "name": "Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        480,
+        -40
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "935f73e6-9ada-4be3-9f50-cc82f20090b6",
+      "name": "Chat",
+      "type": "@n8n/n8n-nodes-langchain.lmChatHf",
+      "typeVersion": 1,
+      "position": [
+        480,
+        -340
+      ],
+      "credentials": {
+        "huggingFaceApi": {
+          "id": "HF_API",
+          "name": "HuggingFace"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json }}"
+      },
+      "id": "dfbefb06-2a27-425f-89fe-cad782edc25f",
+      "name": "Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1,
+      "position": [
+        760,
+        -40
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": "SHEET_ID",
+        "sheetName": "Log"
+      },
+      "id": "2459f5be-eece-42ce-b0f5-b9d678bdad6b",
+      "name": "Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        960,
+        -40
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "SHEETS_API",
+          "name": "Sheets"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Splitter",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Memory",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Splitter": {
+      "main": [
+        [
+          {
+            "node": "Embeddings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ],
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Insert",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Insert",
+            "type": "ai_embedding",
+            "index": 0
+          },
+          {
+            "node": "Query",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert": {
+      "ai_document": [
+        []
+      ]
+    },
+    "Query": {
+      "ai_vectorStore": [
+        [
+          {
+            "node": "Tool",
+            "type": "ai_vectorStore",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chat": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent": {
+      "main": [
+        [
+          {
+            "node": "Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

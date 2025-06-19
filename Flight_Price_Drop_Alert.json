@@ -1,0 +1,299 @@
+{
+  "name": "Flight Price Drop Alert",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Flight Price Drop Alert",
+        "height": 520,
+        "width": 1100
+      },
+      "id": "2e971a9b-a6ba-4497-8110-fe07b7a47b42",
+      "name": "Sticky",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -500,
+        -250
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "flight_price_drop_alert"
+      },
+      "id": "9acabf76-8493-4272-9738-3b188b02d72a",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -300,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "chunkSize": 400,
+        "chunkOverlap": 40
+      },
+      "id": "c0844651-967a-4a74-8ec7-21b8ad69c57e",
+      "name": "Splitter",
+      "type": "@n8n/n8n-nodes-langchain.textSplitterCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        -100,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "model": "default"
+      },
+      "id": "9e584208-6ee6-4d88-928d-ebea7670029f",
+      "name": "Embeddings",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1,
+      "position": [
+        100,
+        0
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "OPENAI_API",
+          "name": "OpenAI"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "indexName": "flight_price_drop_alert"
+      },
+      "id": "68ba07d4-4a88-488f-b516-3af28bf2e448",
+      "name": "Insert",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreWeaviate",
+      "typeVersion": 1,
+      "position": [
+        300,
+        0
+      ],
+      "credentials": {
+        "weaviateApi": {
+          "id": "WEAVIATE_API",
+          "name": "Weaviate account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "indexName": "flight_price_drop_alert"
+      },
+      "id": "e8555ffa-cd0a-43b9-9877-0224cec55b1c",
+      "name": "Query",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreWeaviate",
+      "typeVersion": 1,
+      "position": [
+        300,
+        -180
+      ],
+      "credentials": {
+        "weaviateApi": {
+          "id": "WEAVIATE_API",
+          "name": "Weaviate account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "Weaviate"
+      },
+      "id": "8adc9dca-87b4-4d3b-a491-ae2bfa48fa92",
+      "name": "Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolVectorStore",
+      "typeVersion": 1,
+      "position": [
+        480,
+        -180
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "20c201df-db6e-4532-92eb-423d9ed792f0",
+      "name": "Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        480,
+        -40
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "729d441d-a5fa-44c7-9fca-ed1e9a3b7eb7",
+      "name": "Chat",
+      "type": "@n8n/n8n-nodes-langchain.lmChatHf",
+      "typeVersion": 1,
+      "position": [
+        480,
+        -340
+      ],
+      "credentials": {
+        "huggingFaceApi": {
+          "id": "HF_API",
+          "name": "HuggingFace"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json }}"
+      },
+      "id": "960b4ad9-0550-4dc9-932b-ee0cc272c739",
+      "name": "Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1,
+      "position": [
+        760,
+        -40
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": "SHEET_ID",
+        "sheetName": "Log"
+      },
+      "id": "c1386b51-3a1c-4d40-aa44-90ea2d247c4e",
+      "name": "Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        960,
+        -40
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "SHEETS_API",
+          "name": "Sheets"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Splitter",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Memory",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Splitter": {
+      "main": [
+        [
+          {
+            "node": "Embeddings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ],
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Insert",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Insert",
+            "type": "ai_embedding",
+            "index": 0
+          },
+          {
+            "node": "Query",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert": {
+      "ai_document": [
+        []
+      ]
+    },
+    "Query": {
+      "ai_vectorStore": [
+        [
+          {
+            "node": "Tool",
+            "type": "ai_vectorStore",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chat": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent": {
+      "main": [
+        [
+          {
+            "node": "Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
